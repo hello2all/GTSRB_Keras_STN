@@ -36,11 +36,11 @@ def stn_model():
                                  output_size=(32, 32),
                                  input_shape=input_shape))
 
-    model.add(Convolution2D(32, 5, 5, border_mode='same',
+    model.add(Convolution2D(64, 5, 5, border_mode='same',
                             activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.2))
-    model.add(Convolution2D(64, 5, 5, border_mode='same',
+    model.add(Convolution2D(128, 5, 5, border_mode='same',
                             activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.2))

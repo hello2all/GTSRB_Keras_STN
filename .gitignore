@@ -1,0 +1,9 @@
+*.pyc
+*.p
+input
+output
+GTSRB
+report
+*.pdf
+__pycache__
+tensorflow

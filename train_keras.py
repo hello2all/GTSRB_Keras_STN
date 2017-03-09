@@ -30,10 +30,10 @@ print("Number of testing examples =", X_test.shape[0])
 print("Image data shape =", X_train[0].shape)
 print("Number of classes =", len(np.unique(y_train)))
 
-batch_size = 20
-nb_epoch = 10000
+batch_size = 30
+nb_epoch = 1000
 model = stn_model()
-adagrad = Adagrad(lr=0.00032, epsilon=1e-08, decay=0.0)
+adagrad = Adagrad(lr=0.00032, epsilon=1e-08, decay=1e-6)
 
 model.compile(loss='sparse_categorical_crossentropy',
               optimizer=adagrad,

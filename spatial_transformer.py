@@ -37,12 +37,12 @@ class SpatialTransformer(Layer):
         self.regularizers = self.locnet.regularizers
         self.constraints = self.locnet.constraints
 
-    # def get_output_shape_for(self, input_shape):
-    #     output_size = self.output_size
-    #     return (None,
-    #             int(output_size[0]),
-    #             int(output_size[1]),
-    #             int(input_shape[-1]))
+    def get_output_shape_for(self, input_shape):
+        output_size = self.output_size
+        return (None,
+                int(output_size[0]),
+                int(output_size[1]),
+                int(input_shape[-1]))
 
     def call(self, X, mask=None):
         affine_transformation = self.locnet.call(X)

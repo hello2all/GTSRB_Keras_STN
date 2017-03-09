@@ -8,3 +8,5 @@ report
 __pycache__
 tensorflow
 .vscode
+*.zip
+.floyd*

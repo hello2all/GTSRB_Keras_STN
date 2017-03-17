@@ -1,20 +1,21 @@
 import os
 import pickle
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import cv2
-from sklearn.utils import shuffle
 from floyd import dot
+from skimage import exposure, io
+from sklearn.utils import shuffle
 
-IMG_SIZE = 299
+IMG_SIZE = 32
 TRAIN_DIR = dot + "/input/GTSRB/Final_Training/"
 TEST_DIR = dot + "/input/GTSRB/Final_Test/"
 
 def preprocess_img(img):
 
-    # # Histogram normalization in v channel
+    # Histogram normalization in v channel
     # hsv = color.rgb2hsv(img)
     # hsv[:, :, 2] = exposure.equalize_hist(hsv[:, :, 2])
     # img = color.hsv2rgb(hsv)
@@ -67,9 +68,50 @@ def test_data(TEST_DIR=TEST_DIR):
     image_paths, labels = shuffle(image_paths, labels)
     return image_paths, labels
 
+def load_pickles():
+    training_file = dot + '/input/train.p'
+    testing_file = dot + '/input/test.p'
+    validating_file = dot + '/input/valid.p'
+
+    with open(training_file, mode='rb') as f:
+        train = pickle.load(f)
+    with open(validating_file, mode='rb') as f:
+        valid = pickle.load(f)
+    with open(testing_file, mode='rb') as f:
+        test = pickle.load(f)
+    return train, valid, test
+
+def normalize_feature(data_dict):
+    features = []
+    data = {}
+    for img in data_dict['features']:
+        features.append(exposure.equalize_hist(img))
+    data['features'] = np.array(features)
+    data['labels'] = data_dict['labels']
+    return data
+
+def dump_pickles(train, valid, test):
+    training_file = dot + '/input/train_norm.p'
+    testing_file = dot + '/input/test_norm.p'
+    validating_file = dot + '/input/valid_norm.p'
+
+    with open(training_file, mode='wb') as f:
+        pickle.dump(train, f)
+    with open(validating_file, mode='wb') as f:
+        pickle.dump(valid, f)
+    with open(testing_file, mode='wb') as f:
+        pickle.dump(test, f)
 
 def main():
-    pass
+    train, valid, test = load_pickles()
+    print("local normalize train")
+    train = normalize_feature(train)
+    print("local normalize valid")
+    valid = normalize_feature(valid)
+    print("local normalize test")
+    test = normalize_feature(test)   
+    dump_pickles(train, valid, test)
+
 
     # train = train_data(TRAIN_DIR)
     # test = test_data(TEST_DIR)

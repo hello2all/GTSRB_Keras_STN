@@ -44,7 +44,7 @@ nb_epoch = 100
 model = conv_model()
 adagrad = Adagrad(lr=0.0002, epsilon=1e-08, decay=0.01)
 sgd = SGD(lr=0.001, momentum=0.9, decay=0.0, nesterov=True)
-adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.02)
+adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.01)
 
 model.compile(loss='sparse_categorical_crossentropy',
               optimizer=adam,

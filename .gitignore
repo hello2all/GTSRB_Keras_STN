@@ -1,7 +1,5 @@
 *.pyc
 *.p
-input
-output
 GTSRB
 report
 *.pdf

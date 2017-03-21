@@ -5,7 +5,6 @@ from keras.layers import (Activation, Convolution2D, Dense, Dropout, Flatten,
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential, model_from_json
-from keras.preprocessing.image import ImageDataGenerator
 from keras.regularizers import l2
 from keras.utils import np_utils
 from spatial_transformer import SpatialTransformer

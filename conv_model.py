@@ -1,7 +1,8 @@
 import numpy as np
 
-from keras.layers import (Activation, Convolution2D, Dense, Dropout, Flatten,
+from keras.layers import (Activation, Dense, Dropout, Flatten,
                           Lambda, MaxPooling2D)
+from keras.layers.convolutional import Conv2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.normalization import BatchNormalization
 from keras.models import Sequential, model_from_json
@@ -17,11 +18,11 @@ def locnet():
     weights = [W, b.flatten()]
     locnet = Sequential()
 
-    locnet.add(Convolution2D(16, 7, 7 , border_mode='valid', input_shape=(32, 32, 3)))
+    locnet.add(Conv2D(16, (7, 7), padding='valid', input_shape=(32, 32, 3)))
     locnet.add(MaxPooling2D(pool_size=(2, 2)))
-    locnet.add(Convolution2D(32, 5, 5, border_mode='valid'))
+    locnet.add(Conv2D(32, (5, 5), padding='valid'))
     locnet.add(MaxPooling2D(pool_size=(2, 2)))
-    locnet.add(Convolution2D(64, 3, 3, border_mode='valid'))
+    locnet.add(Conv2D(64, (3, 3), padding='valid'))
     locnet.add(MaxPooling2D(pool_size=(2, 2)))
 
     locnet.add(Flatten())
@@ -40,33 +41,33 @@ def conv_model(input_shape=(32, 32, 3)):
         input_shape=(32, 32, 3),
         output_shape=(32, 32, 3)))
     model.add(BatchNormalization())
-    model.add(Convolution2D(10, 1, 1, border_mode='same', W_regularizer=l2(0.04)))
+    model.add(Conv2D(10, (1, 1), padding='same', kernel_regularizer=l2(0.04)))
     model.add(LeakyReLU(alpha=0.5))
     model.add(BatchNormalization())
-    model.add(Convolution2D(3, 1, 1, border_mode='same', W_regularizer=l2(0.04)))
+    model.add(Conv2D(3, (1, 1), padding='same', kernel_regularizer=l2(0.04)))
     model.add(LeakyReLU(alpha=0.5))
     model.add(BatchNormalization())
     model.add(SpatialTransformer(localization_net=locnet(),
                                  output_size=(32, 32)))
-    model.add(Convolution2D(16, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(Conv2D(16, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(BatchNormalization())
-    model.add(Convolution2D(32, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(Conv2D(32, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(BatchNormalization())
-    model.add(Convolution2D(64, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(Conv2D(64, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(BatchNormalization())
-    model.add(Convolution2D(96, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(Conv2D(96, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(BatchNormalization())
-    model.add(Convolution2D(128, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(Conv2D(128, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(BatchNormalization())
-    model.add(Convolution2D(192, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Convolution2D(256, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(Conv2D(192, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(BatchNormalization())
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Convolution2D(128, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(Conv2D(256, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(BatchNormalization())
-    model.add(Convolution2D(64, 5, 5, border_mode='same', activation='relu', W_regularizer=l2(0.04)))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(128, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
+    model.add(BatchNormalization())
+    model.add(Conv2D(64, (5, 5), padding='same', activation='relu', kernel_regularizer=l2(0.04)))
     model.add(MaxPooling2D(pool_size=(8, 8)))
     model.add(Flatten())
     model.add(Dropout(0.6))

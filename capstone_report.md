@@ -4,19 +4,21 @@ Liangyuan Tian
 March 24th, 2017
 
 ## I. Definition
+
 This project has provided a novel approach for traffic sign imgage recognition utilizing the newest advancements in computer image recognition.
 A deep learning model which is capable of learning color and spatial variations of image objects is proposed.
 As a result, the model has higher performance than human without data preprocessing (except cropping) nor augmentation.
 
 ### Project Overview
+
 Recent advancement in autonomous vehicles has shown the once fictional technology is gradually becoming reality in the near future. 
 In the foreseeable future, vehicles of various automation levels will coexist on the road. 
 Thus it is crucial for automated driving machines able to recognise and interpret the meaning of traffic signs and follow traffic rules. 
 
 The GTSRB [4] is a multi-class, single-image dataset consists of 50,000+ traffic sign images with 43 classes collected in Germany. 
-Some of the images samples are shown below. 
+Some of the images samples are shown in Figure 1. 
 
-![alt][image1]
+![GTSRB sample image][image1]
 
 This project use the images in the dataset as input, and the class category as output. 
 Data can be downloaded from the official website [http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset). 
@@ -44,18 +46,20 @@ its performance should exceed human accuracy to provide reliable decision suppor
 In order to enable the network to learn color and spatial variance, 2 learnable modules will be introduced.
 
 #### Spatial transformer network
+
 Spatial transformer network [12] (STN) is a learnable module which explicitly allows the spatial manipulation of data within the network. 
 This differentiable module can be inserted into existing convolutional architectures, 
 giving neural networks the ability to actively spatially transform feature maps, 
 conditional on the feature map itself, 
 without any extra training supervision or modification to the optimisation process. 
-An example of how STN transforms an image is given in the following figure. 
+An example of how STN transforms an image is given in Figure 2. 
 On the left is the input image. In the middle illustrates where STN is sampling. 
 On the right is the output of the transformation.
 
-![alt][image2]
+![STN example][image2]
 
 #### Learned color transformation
+
 [13] has systematically compared many techniques of the recent advancements in image recognition. 
 One of them is learned color transformation using 1 by 1 convolution modules. 
 This project adopts the best practice using RGB -> 10 1 by 1 convolution -> 3 1 by 1 convolution architecture with VLReLu activation.
@@ -68,6 +72,7 @@ All techniques will discussed in detail in the following chapters.
 
 
 ### Metrics
+
 Many prior researches have been conducted on this dataset. 
 The best published results are listed in the table below.
 
@@ -90,26 +95,27 @@ Our model will be benchmared against these published results on percentage accur
 
 In this project, we have in total 34799 training images, 4410 validation images and 12630 testing images with 43 labels in every dataset. 
 The label distribution of the training set is illustrated below. 
-As its shown in the figure, label distribution is unbalanced, some classes have significantly larger quantity than others. 
+As its shown in Figure 3, label distribution is unbalanced, some classes have significantly larger quantity than others. 
 We will not attempt to balance the dataset as the intention is to test the model performance without augmentation.
 
-![alt][image3]
+![Training label distribution][image3]
 
-As for images features, images below shows some of the charactoristics of the dataset. 
+As for images features, Figure 4 shows some of the charactoristics of the dataset. 
 As we can see, images haven taken under many lighting conditions, from different viewing angle, with different resolutions. 
 Addtionally, there might be artifacts such as shadow, flare and motion blur. 
 
-![alt][image4]
+![Features][image4]
 
 ### Algorithms and Techniques
 
 #### Spatial transformer network
+
 The goal of spatial transformers [12] is to add to the base network a layer able to perform an explicit geometric transformation on an input. 
 The parameters of the transformation are learnt thanks to the standard backpropagation algorithm, meaning there is no need for extra data or supervision. 
-The structure of STN is shown in the figure below.
+The structure of STN is shown in Figure 5.
 
 
-![alt][image5]
+![Spatial Transformer Network structure][image5]
 
 The input feature map $U$ is passed to a localisation network which regresses the transformation parameters $\theta$. 
 The regular spatial grid $G$ over $V$ is transformed to the sampling grid $T_\theta(G)$, which is applied to $U$ using differentiable image resampling, producing the warped output feature map $V$ . 
@@ -118,17 +124,20 @@ The combination of the localisation network and sampling mechanism defines a spa
 The 3 elements of STN is decribed in detail in the following passages.
 
 ##### Localisation Network
+
 The localization network takes the original image as an input and outputs the parameters of the transformation we want to apply. 
 It takes image as an input, and output affine trasformation matrix with 6 dimensions. 
-The localization network structure for this project is shown below.
+The localization network structure for this project is shown in Figure 6.
 
-![alt][image6]
+![Localization network structure][image6]
 
 The output of the last fully connect is then reshaped into affine transformation matrix:
 $$
 A_\theta = \begin{bmatrix}\theta_{11} & \theta_{12} & \theta_{13} \\\theta_{21} & \theta_{22} & \theta_{23} \end{bmatrix} 
 $$
+
 ##### Parameterised Sampling Grid
+
 The grid generator generates a grid of coordinates in the input image corresponding to each pixel from the output image.
 $$
 \left(\begin{array}{c}x_i^s\\ y_i^s\end{array}\right) = T_\theta(G_i) = A_\theta\left(\begin{array}{c}x_i^t\\ y_i^t \\1 \end{array}\right) = \begin{bmatrix}\theta_{11} & \theta_{12} & \theta_{13} \\\theta_{21} & \theta_{22} & \theta_{23} \end{bmatrix} \left(\begin{array}{c}x_i^t\\ y_i^t \\1 \end{array}\right)
@@ -136,65 +145,75 @@ $$
 where $(x_i^t,y_i^t)$ are the target coordinates of the regular grid in the output feature map,
 $(x_i^s,y_i^s)$ are the source coordinates in the input feature map that define the sample points.
 
-An example of affine transformation is given below.
+An example of affine transformation is given in Figure 7.
 
-![alt][image7]
+![Affine Transformation][image7]
 
 ##### Differentiable Image Sampling
+
 The sampler generates the output image using the grid given by the grid generator. In this project we use bilinear interpolation, 
 the output value for pixel $i$ at location $(x_i^t,y_i^t)$ in channel $c$ is
 $$
 V_i^c = \sum_n^H\sum_m^W U_{nm}^c max(0, 1-|x_i^s-m|) max(0,1-|y_i^s-n|)
 $$
 
-An example of bilinear interpolation is shown below:
+An example of bilinear interpolation is shown in Figure 8:
 
-![alt][image8]
+![Bilinear interpolation][image8]
 
 In this geometric visualisation, the value at the black spot is the sum of the value at each coloured spot multiplied by the area of the rectangle of the same colour, divided by the total area of all four rectangles.
 
 Since bilinear sampling kernel is Differentiable, errors can be back propagated to the weights in localisation network.
+
 #### Learned color transformation
+
 [13] has compared various learned image pixel trasformations via 1 by 1 convolution. 
 The results from the original paper is listed in the following table.
 
 |Architecture|Non-linearity|Accuracy change|
 |------|--------|--------|
-|RGB → conv1x1x10→conv1x1x3|tanh|-0.008%|
+|RGB -> conv1x1x10->conv1x1x3|tanh|-0.008%|
 |RGB|-|0%|
-|RGB → conv1x1x3→conv1x1x3|VLReLU|+0.009%|
-|RGB → conv1x1x10→ conv1x1x3 + RGB|VLReLU|+0.011%|
-|[RGB; log(RGB)] → conv1x1x10→ conv1x1x3|VLReLU|+0.011%|
-|RGB → conv1x1x16→conv1x1x3|VLReLU|+0.012%|
-|RGB → conv1x1x10→conv1x1x3|VLReLU|+0.014%|
+|RGB -> conv1x1x3->conv1x1x3|VLReLU|+0.009%|
+|RGB -> conv1x1x10-> conv1x1x3 + RGB|VLReLU|+0.011%|
+|[RGB; log(RGB)] -> conv1x1x10-> conv1x1x3|VLReLU|+0.011%|
+|RGB -> conv1x1x16->conv1x1x3|VLReLU|+0.012%|
+|RGB -> conv1x1x10->conv1x1x3|VLReLU|+0.014%|
 
-The best performing color transformer RGB → conv1x1x10→conv1x1x3 is selected as the learning module.
+The best performing color transformer RGB -> conv1x1x10->conv1x1x3 is selected as the learning module.
+
 #### CNN network design
-[17] has proposed an empirical CNN architecture design for image recognition, this project adopts the authors network design for 32×32 image classification.
+
+[17] has proposed an empirical CNN architecture design for image recognition, this project adopts the authors network design for 32x32 image classification.
+
 ##### Feature extraction network 
+
 |Layer type|Kernel size|Feature map size|No. of filters|
 |------|--------|--------|--------|
-|convolution|5x5|32×32|16|
-|convolution|5x5|32×32|32|
-|convolution|5x5|32×32|64|
-|convolution|5x5|32×32|96|
-|convolution|5x5|32×32|128|
-|convolution|5x5|32×32|192|
+|convolution|5x5|$32\times32$|16|
+|convolution|5x5|32x32|32|
+|convolution|5x5|32x32|64|
+|convolution|5x5|32x32|96|
+|convolution|5x5|32x32|128|
+|convolution|5x5|32x32|192|
 |MaxPool|2x2|-|-|
-|convolution|5x5|16×16|256|
+|convolution|5x5|16x16|256|
 |MaxPool|2x2|-|-|
 
 ##### Classifier network
 
 |Layer type|Kernel size|Feature map size|No. of filters|
 |------|--------|--------|--------|
-|convolution|5x5|8×8|128|
-|convolution|5x5|8×8|64|
+|convolution|5x5|8x8|128|
+|convolution|5x5|8x8|64|
 |MaxPool|8x8|-|-|
 
+
 #### Batch normalization
+
 Batch Normalization [18] allows for faster learning and higher overall accuracy by normalizing layer inputs.
 This project implement BN for each convolution layer to improve model performance.
+
 ### Benchmark
 
 The the performance of our model will be tested against the human performance [7] on both overall accuracy as well as categorical accuracy.
@@ -208,13 +227,17 @@ The the performance of our model will be tested against the human performance [7
 ## III. Methodology
 
 ### Data Preprocessing
+
 Since the model structure is able to learn the color and spatial variance, new test images are no longer needed to be precisely cropped nor augmented. Thus training process is greatly simplified, we will then only focus on adjusting hyper parameters in the network to get the best performance.
 
 ### Implementation
-The final CNN architecture is illustrated in the figure below.
-![alt][image10]
+
+The final CNN architecture is illustrated in the Figure 10.
+
+![Full network][image10]
 
 Hyper parameters for training the model is listed in the table below.
+
 |Name|Value|
 |------|--------|
 |Batch size|128|
@@ -255,13 +278,14 @@ jupyter notebook test_model.ipynb
 The high accuray has shown the model is able to generalizes well on unseen data and give a precise prediction.
 
 A robustness test is conducted using a dozen of new images downloaded from internet.
-The following charts shows the result of the predictions.
+The following Figure11 and Figure 12 shows the result of the predictions.
 
-![alt][image11]
-![alt][image12]
+![Robustness test 1][image11]
+![Robustness test 2][image12]
 
 As we can see, the model performs very well on trained labels with very high confidence. However, it is unable to predict labels which aren't trained.
 Such as the "end of speed limit 60km/h" and "pedestrains only" are miscategorized since thet are not in the training label set.
+
 ### Justification
 
 Compared to human performance given by [7], we hereby compare the categorical accuray of the two models in the following table.
@@ -299,8 +323,10 @@ Since p is less than typical threshold 0.05, we reject the null hypothesis. Thus
 ## V. Conclusion
 
 ### Free-Form Visualization
-Below images are all the signs that the model failed to predict.
-![alt][image13]
+
+Figure 113 shows all images that the model failed to predict.
+
+![Failed images][image13]
 
 There images are subject to severe flaws such as strong shadow/flare, obstructions, low illumination, motion blur etc. Even humen struggle to recognize.
 
@@ -329,7 +355,7 @@ With more data, we can expect the model become able to classify more sign images
 
 -----------
 
-[//]: # (References)
+# References
 
 [1]: De la Escalera, Arturo, J. Ma Armingol, and Mario Mata. "Traffic sign recognition and analysis for intelligent vehicles." Image and vision computing 21.3 (2003): 247-258.
 
@@ -378,11 +404,11 @@ With more data, we can expect the model become able to classify more sign images
 [image3]: ./footage/label_dist.png "Training label distribution"
 [image4]: ./footage/features.png "Features"
 [image5]: ./footage/stn_structure.png "Spatial Transformer Network structure"
-[image6]: ./footage/locnet.png "localization network structure"
+[image6]: ./footage/locnet.png "Localization network structure"
 [image7]: ./footage/affine.png "Affine Transformation"
 [image8]: ./footage/bilinear.png "Bilinear interpolation"
 [image9]: ./footage/stn_evolution.gif "STN evolution"
 [image10]: ./footage/network.png "Full network"
-[image11]: ./footage/prob1.png "robustness test 1"
-[image12]: ./footage/prob2.png "robustness test 2"
-[image13]: ./footage/failed.png "failed images"
+[image11]: ./footage/prob1.png "Robustness test 1"
+[image12]: ./footage/prob2.png "Robustness test 2"
+[image13]: ./footage/failed.png "Failed images"

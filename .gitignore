@@ -8,3 +8,4 @@ tensorflow
 .vscode
 *.zip
 .floyd*
+.ipynb_checkpoints

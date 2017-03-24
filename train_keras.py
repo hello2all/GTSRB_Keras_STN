@@ -1,7 +1,6 @@
 import pickle
 from conv_model import conv_model
 import numpy as np
-import sys
 
 from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
@@ -28,7 +27,7 @@ print("Image data shape =", X_train[0].shape)
 print("Number of classes =", len(np.unique(y_train)))
 
 batch_size = 128
-epochs = 100
+epochs = 150
 model = conv_model()
 
 adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.01)
@@ -45,11 +44,10 @@ try:
                 validation_data=(X_valid, y_valid),
                 shuffle=True,
                 callbacks=[checkpointer])
-except:
+except KeyboardInterrupt:
     print("training interrupted")
-    print(sys.exc_info())
 
+model.load_weights("./output/weights.hdf5")
 y_pred = model.predict_classes(X_test)
 acc = np.sum(y_pred==y_test)/np.size(y_pred)
 print("Test accuracy = {}".format(acc))
-model.save('./output/model.h5')

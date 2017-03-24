@@ -1,120 +1,336 @@
-# Machine Learning Engineer Nanodegree
-## Capstone Project
+# Traffic Sign Recognition using CNN with Learned Color and Spatial Transformation
+## Capstone Project for Machine Learning Engineer Nanodegree
 Liangyuan Tian  
-March 23rd, 2017
+March 24th, 2017
 
 ## I. Definition
-_(approx. 1-2 pages)_
+This project has provided a novel approach for traffic sign imgage recognition utilizing the newest advancements in computer image recognition.
+A deep learning model which is capable of learning color and spatial variations of image objects is proposed.
+As a result, the model has higher performance than human without data preprocessing (except cropping) nor augmentation.
 
 ### Project Overview
-In this section, look to provide a high-level overview of the project in layman’s terms. Questions to ask yourself when writing this section:
-- _Has an overview of the project been provided, such as the problem domain, project origin, and related datasets or input data?_
-- _Has enough background information been given so that an uninformed reader would understand the problem domain and following problem statement?_
+Recent advancement in autonomous vehicles has shown the once fictional technology is gradually becoming reality in the near future. 
+In the foreseeable future, vehicles of various automation levels will coexist on the road. 
+Thus it is crucial for automated driving machines able to recognise and interpret the meaning of traffic signs and follow traffic rules. 
+
+The GTSRB [4] is a multi-class, single-image dataset consists of 50,000+ traffic sign images with 43 classes collected in Germany. 
+Some of the images samples are shown below. 
+
+![alt][image1]
+
+This project use the images in the dataset as input, and the class category as output. 
+Data can be downloaded from the official website [http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset). 
+These large amount of images are collect in real life, thus very suitable to be used as training data for our learning model.
+To save time on cropping images from the original dataset, this project uses the already processed GTSRB data from Udacity, which can be downloaded from [here](https://d17h27t6h515a5.cloudfront.net/topher/2017/February/5898cd6f_traffic-signs-data/traffic-signs-data.zip).
+
+Traffic sign recognition topics have been relatively well studied in research, 
+notable publications include [1], which used nerual network to classify signs; 
+and [2] uses pattern matching; with the advances in convolutional nerual network; 
+[3] is able to achieve human level accuracy using muti-scale convolutional nerual network.
+The winner of the original competition [5] used a committee of convolutional neural networks achieved the best accuracy of 99.46%.
+
+Despite the success in convolution nerual networks (CNN), conventional CNNs are unable to handle color and spatial variation well.
+Image preprocessing (Histogram equlization, convert to gray scale) and augmentation (rotation, translation, sheering, augment brightness) 
+are common practices to give the network more synthetic variations to learn from. 
+This complicates training process and requires addtional processing before feeding data into the detection model.
 
 ### Problem Statement
-In this section, you will want to clearly define the problem that you are trying to solve, including the strategy (outline of tasks) you will use to achieve the desired solution. You should also thoroughly discuss what the intended solution will be for this problem. Questions to ask yourself when writing this section:
-- _Is the problem statement clearly defined? Will the reader understand what you are expecting to solve?_
-- _Have you thoroughly discussed how you will attempt to solve the problem?_
-- _Is an anticipated solution clearly defined? Will the reader understand what results you are looking for?_
+
+For this multi-class classification problem, 
+an automatic traffic sign recognition model will be built to categorize various traffic sign images. 
+A deep convolutional neural network will be trained on various traffic sign images, 
+its performance should exceed human accuracy to provide reliable decision support for autonomous vehicles. 
+
+In order to enable the network to learn color and spatial variance, 2 learnable modules will be introduced.
+
+#### Spatial transformer network
+Spatial transformer network [12] (STN) is a learnable module which explicitly allows the spatial manipulation of data within the network. 
+This differentiable module can be inserted into existing convolutional architectures, 
+giving neural networks the ability to actively spatially transform feature maps, 
+conditional on the feature map itself, 
+without any extra training supervision or modification to the optimisation process. 
+An example of how STN transforms an image is given in the following figure. 
+On the left is the input image. In the middle illustrates where STN is sampling. 
+On the right is the output of the transformation.
+
+![alt][image2]
+
+#### Learned color transformation
+[13] has systematically compared many techniques of the recent advancements in image recognition. 
+One of them is learned color transformation using 1 by 1 convolution modules. 
+This project adopts the best practice using RGB -> 10 1 by 1 convolution -> 3 1 by 1 convolution architecture with VLReLu activation.
+
+Aside from these 2 learnable plugin modules, 
+other techniques such as improved feature extraction architecture, 
+convolutional classfier architecture and batch normalizaion techniques are implemented into the module. 
+All techniques will discussed in detail in the following chapters.
+
+
 
 ### Metrics
-In this section, you will need to clearly define the metrics or calculations you will use to measure performance of a model or result in your project. These calculations and metrics should be justified based on the characteristics of the problem and problem domain. Questions to ask yourself when writing this section:
-- _Are the metrics you’ve chosen to measure the performance of your models clearly discussed and defined?_
-- _Have you provided reasonable justification for the metrics chosen based on the problem and solution?_
+Many prior researches have been conducted on this dataset. 
+The best published results are listed in the table below.
 
+|Method|Accuracy|
+|------|--------|
+|Committee of CNNs[5]|99.46%|
+|Color-blob-based COSFIRE filters for object recogn[6]|98.97%|
+|Human Performance[7]|98.84%|
+|Multi-Scale CNNs[3]|98.31%|
+|Random Forests[8]|96.14%|
+|LDA on HOG 2[9]|95.68%|
+|LDA on HOG 1[10]|93.18%|
+|LDA on HOG 3[11]|92.34%|
+
+Our model will be benchmared against these published results on percentage accuracy. 
 
 ## II. Analysis
-_(approx. 2-4 pages)_
 
 ### Data Exploration
-In this section, you will be expected to analyze the data you are using for the problem. This data can either be in the form of a dataset (or datasets), input data (or input files), or even an environment. The type of data should be thoroughly described and, if possible, have basic statistics and information presented (such as discussion of input features or defining characteristics about the input or environment). Any abnormalities or interesting qualities about the data that may need to be addressed have been identified (such as features that need to be transformed or the possibility of outliers). Questions to ask yourself when writing this section:
-- _If a dataset is present for this problem, have you thoroughly discussed certain features about the dataset? Has a data sample been provided to the reader?_
-- _If a dataset is present for this problem, are statistics about the dataset calculated and reported? Have any relevant results from this calculation been discussed?_
-- _If a dataset is **not** present for this problem, has discussion been made about the input space or input data for your problem?_
-- _Are there any abnormalities or characteristics about the input space or dataset that need to be addressed? (categorical variables, missing values, outliers, etc.)_
 
-### Exploratory Visualization
-In this section, you will need to provide some form of visualization that summarizes or extracts a relevant characteristic or feature about the data. The visualization should adequately support the data being used. Discuss why this visualization was chosen and how it is relevant. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant characteristic or feature about the dataset or input data?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
+In this project, we have in total 34799 training images, 4410 validation images and 12630 testing images with 43 labels in every dataset. 
+The label distribution of the training set is illustrated below. 
+As its shown in the figure, label distribution is unbalanced, some classes have significantly larger quantity than others. 
+We will not attempt to balance the dataset as the intention is to test the model performance without augmentation.
+
+![alt][image3]
+
+As for images features, images below shows some of the charactoristics of the dataset. 
+As we can see, images haven taken under many lighting conditions, from different viewing angle, with different resolutions. 
+Addtionally, there might be artifacts such as shadow, flare and motion blur. 
+
+![alt][image4]
 
 ### Algorithms and Techniques
-In this section, you will need to discuss the algorithms and techniques you intend to use for solving the problem. You should justify the use of each one based on the characteristics of the problem and the problem domain. Questions to ask yourself when writing this section:
-- _Are the algorithms you will use, including any default variables/parameters in the project clearly defined?_
-- _Are the techniques to be used thoroughly discussed and justified?_
-- _Is it made clear how the input data or datasets will be handled by the algorithms and techniques chosen?_
 
+#### Spatial transformer network
+The goal of spatial transformers [12] is to add to the base network a layer able to perform an explicit geometric transformation on an input. 
+The parameters of the transformation are learnt thanks to the standard backpropagation algorithm, meaning there is no need for extra data or supervision. 
+The structure of STN is shown in the figure below.
+
+
+![alt][image5]
+
+The input feature map $U$ is passed to a localisation network which regresses the transformation parameters $\theta$. 
+The regular spatial grid $G$ over $V$ is transformed to the sampling grid $T_\theta(G)$, which is applied to $U$ using differentiable image resampling, producing the warped output feature map $V$ . 
+The combination of the localisation network and sampling mechanism defines a spatial transformer.
+
+The 3 elements of STN is decribed in detail in the following passages.
+
+##### Localisation Network
+The localization network takes the original image as an input and outputs the parameters of the transformation we want to apply. 
+It takes image as an input, and output affine trasformation matrix with 6 dimensions. 
+The localization network structure for this project is shown below.
+
+![alt][image6]
+
+The output of the last fully connect is then reshaped into affine transformation matrix:
+$$
+A_\theta = \begin{bmatrix}\theta_{11} & \theta_{12} & \theta_{13} \\\theta_{21} & \theta_{22} & \theta_{23} \end{bmatrix} 
+$$
+##### Parameterised Sampling Grid
+The grid generator generates a grid of coordinates in the input image corresponding to each pixel from the output image.
+$$
+\left(\begin{array}{c}x_i^s\\ y_i^s\end{array}\right) = T_\theta(G_i) = A_\theta\left(\begin{array}{c}x_i^t\\ y_i^t \\1 \end{array}\right) = \begin{bmatrix}\theta_{11} & \theta_{12} & \theta_{13} \\\theta_{21} & \theta_{22} & \theta_{23} \end{bmatrix} \left(\begin{array}{c}x_i^t\\ y_i^t \\1 \end{array}\right)
+$$
+where $(x_i^t,y_i^t)$ are the target coordinates of the regular grid in the output feature map,
+$(x_i^s,y_i^s)$ are the source coordinates in the input feature map that define the sample points.
+
+An example of affine transformation is given below.
+
+![alt][image7]
+
+##### Differentiable Image Sampling
+The sampler generates the output image using the grid given by the grid generator. In this project we use bilinear interpolation, 
+the output value for pixel $i$ at location $(x_i^t,y_i^t)$ in channel $c$ is
+$$
+V_i^c = \sum_n^H\sum_m^W U_{nm}^c max(0, 1-|x_i^s-m|) max(0,1-|y_i^s-n|)
+$$
+
+An example of bilinear interpolation is shown below:
+
+![alt][image8]
+
+In this geometric visualisation, the value at the black spot is the sum of the value at each coloured spot multiplied by the area of the rectangle of the same colour, divided by the total area of all four rectangles.
+
+Since bilinear sampling kernel is Differentiable, errors can be back propagated to the weights in localisation network.
+#### Learned color transformation
+[13] has compared various learned image pixel trasformations via 1 by 1 convolution. 
+The results from the original paper is listed in the following table.
+
+|Architecture|Non-linearity|Accuracy change|
+|------|--------|--------|
+|RGB → conv1x1x10→conv1x1x3|tanh|-0.008%|
+|RGB|-|0%|
+|RGB → conv1x1x3→conv1x1x3|VLReLU|+0.009%|
+|RGB → conv1x1x10→ conv1x1x3 + RGB|VLReLU|+0.011%|
+|[RGB; log(RGB)] → conv1x1x10→ conv1x1x3|VLReLU|+0.011%|
+|RGB → conv1x1x16→conv1x1x3|VLReLU|+0.012%|
+|RGB → conv1x1x10→conv1x1x3|VLReLU|+0.014%|
+
+The best performing color transformer RGB → conv1x1x10→conv1x1x3 is selected as the learning module.
+#### CNN network design
+[17] has proposed an empirical CNN architecture design for image recognition, this project adopts the authors network design for 32×32 image classification.
+##### Feature extraction network 
+|Layer type|Kernel size|Feature map size|No. of filters|
+|------|--------|--------|--------|
+|convolution|5x5|32×32|16|
+|convolution|5x5|32×32|32|
+|convolution|5x5|32×32|64|
+|convolution|5x5|32×32|96|
+|convolution|5x5|32×32|128|
+|convolution|5x5|32×32|192|
+|MaxPool|2x2|-|-|
+|convolution|5x5|16×16|256|
+|MaxPool|2x2|-|-|
+
+##### Classifier network
+
+|Layer type|Kernel size|Feature map size|No. of filters|
+|------|--------|--------|--------|
+|convolution|5x5|8×8|128|
+|convolution|5x5|8×8|64|
+|MaxPool|8x8|-|-|
+
+#### Batch normalization
+Batch Normalization [18] allows for faster learning and higher overall accuracy by normalizing layer inputs.
+This project implement BN for each convolution layer to improve model performance.
 ### Benchmark
-In this section, you will need to provide a clearly defined benchmark result or threshold for comparing across performances obtained by your solution. The reasoning behind the benchmark (in the case where it is not an established result) should be discussed. Questions to ask yourself when writing this section:
-- _Has some result or value been provided that acts as a benchmark for measuring performance?_
-- _Is it clear how this result or value was obtained (whether by data or by hypothesis)?_
 
+The the performance of our model will be tested against the human performance [7] on both overall accuracy as well as categorical accuracy.
+
+#### Human performance accuracy
+
+|Overall|Blue|Danger|End of|Red round|Red other|Speed|Special|
+|------|--------|--------|--------|--------|--------|--------|--------|
+|98.84%|99.72%|98.67%|98.89%|98.00%|99.93%|97.63%|100%|
 
 ## III. Methodology
-_(approx. 3-5 pages)_
 
 ### Data Preprocessing
-In this section, all of your preprocessing steps will need to be clearly documented, if any were necessary. From the previous section, any of the abnormalities or characteristics that you identified about the dataset will be addressed and corrected here. Questions to ask yourself when writing this section:
-- _If the algorithms chosen require preprocessing steps like feature selection or feature transformations, have they been properly documented?_
-- _Based on the **Data Exploration** section, if there were abnormalities or characteristics that needed to be addressed, have they been properly corrected?_
-- _If no preprocessing is needed, has it been made clear why?_
+Since the model structure is able to learn the color and spatial variance, new test images are no longer needed to be precisely cropped nor augmented. Thus training process is greatly simplified, we will then only focus on adjusting hyper parameters in the network to get the best performance.
 
 ### Implementation
-In this section, the process for which metrics, algorithms, and techniques that you implemented for the given data will need to be clearly documented. It should be abundantly clear how the implementation was carried out, and discussion should be made regarding any complications that occurred during this process. Questions to ask yourself when writing this section:
-- _Is it made clear how the algorithms and techniques were implemented with the given datasets or input data?_
-- _Were there any complications with the original metrics or techniques that required changing prior to acquiring a solution?_
-- _Was there any part of the coding process (e.g., writing complicated functions) that should be documented?_
+The final CNN architecture is illustrated in the figure below.
+![alt][image10]
+
+Hyper parameters for training the model is listed in the table below.
+|Name|Value|
+|------|--------|
+|Batch size|128|
+|Epochs|150|
+|Optimizer|Adam|
+|Learning rate|0.001|
+|Learning rate decay|0.01|
+|L2 regularization lamda|0.05|
+|Drop out|0.6|
 
 ### Refinement
-In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
-- _Has an initial solution been found and clearly reported?_
-- _Is the process of improvement clearly documented, such as what techniques were used?_
-- _Are intermediate and final solutions clearly reported as the process is improved?_
 
+Various hyper parameters and network architecture has been tested for the designed model.
+
+The first attempt for the project was to use transfer learning to extract bottleneck features from Inception model [19], however the accuracy plateaued around 80% accuracy. 
+Then an attempt to fine tune the Inception model failed due to limited computation power. Even with all inception modules' weights freezed, the final layers takes more than 10 minutes to train one epoch on a GTX1080.
+
+Then the model proposed in [5] with spatial transformer network is implemented and training the model from ground up, 
+without preprocessing and augmentation, the model failed to exceed human Performance.
+
+With better network architecture, color transformer and batch normalizaion implemented, the model was able to ahieve accuracy above 99.00%.
+Tested with multiple hyper parameter sets, model performance reached 99.59% on our testing dataset.
 
 ## IV. Results
-_(approx. 2-3 pages)_
 
 ### Model Evaluation and Validation
-In this section, the final model and any supporting qualities should be evaluated in detail. It should be clear how the final model was derived and why this model was chosen. In addition, some type of analysis should be used to validate the robustness of this model and its solution, such as manipulating the input data or environment to see how the model’s solution is affected (this is called sensitivity analysis). Questions to ask yourself when writing this section:
-- _Is the final model reasonable and aligning with solution expectations? Are the final parameters of the model appropriate?_
-- _Has the final model been tested with various inputs to evaluate whether the model generalizes well to unseen data?_
-- _Is the model robust enough for the problem? Do small perturbations (changes) in training data or the input space greatly affect the results?_
-- _Can results found from the model be trusted?_
 
+After training the model, it is tested on the testing dataset and achieved an accuracy of 99.59%,
+which is higher than the highest published accuracy[5].
+The model is able to predict all kinds of labels with high accuracy and confidence.
+An interactive testing environment is provided in jupyter notebook.
+
+```
+Usage:
+
+jupyter notebook test_model.ipynb
+```
+The high accuray has shown the model is able to generalizes well on unseen data and give a precise prediction.
+
+A robustness test is conducted using a dozen of new images downloaded from internet.
+The following charts shows the result of the predictions.
+
+![alt][image11]
+![alt][image12]
+
+As we can see, the model performs very well on trained labels with very high confidence. However, it is unable to predict labels which aren't trained.
+Such as the "end of speed limit 60km/h" and "pedestrains only" are miscategorized since thet are not in the training label set.
 ### Justification
-In this section, your model’s final solution and its results should be compared to the benchmark you established earlier in the project using some type of statistical analysis. You should also justify whether these results and the solution are significant enough to have solved the problem posed in the project. Questions to ask yourself when writing this section:
-- _Are the final results found stronger than the benchmark result reported earlier?_
-- _Have you thoroughly analyzed and discussed the final solution?_
-- _Is the final solution significant enough to have solved the problem?_
 
+Compared to human performance given by [7], we hereby compare the categorical accuray of the two models in the following table.
+
+|Type|Overall|Blue|Danger|End of|Red round|Red other|Speed|Special|
+|------|------|--------|--------|--------|--------|--------|--------|--------|
+|Our model|99.59%|99.60%|99.53%|100%|99.81%|99.87%|99.69%|99.17%|
+|Human performance|98.84%|99.72%|98.67%|98.89%|98.00%|99.93%|97.63%|100%|
+
+As it is shown above, except "Red other" and "Special" category, our model has a higher accuray than human performance.
+
+Here we use McNemar's test to judge if the improvement is significant:
+
+$H_0$: the two marginal probabilities for each outcome are the same, $p_b = p_c$
+
+$H_1$: $p_b \neq p_c$
+``` R
+> oldclassif <- c (rep ("correct", 12483), rep ("wrong", 147))
+> newclassif <- c (rep ("correct", 12578), rep ("wrong", 52))
+> table (oldclassif, newclassif)
+          newclassif
+oldclassif correct wrong
+   correct   12483     0
+   wrong        95    52
+> mcnemar.test (oldclassif, newclassif)
+
+	McNemar's Chi-squared test with continuity correction
+
+data:  oldclassif and newclassif
+McNemar's chi-squared = 93.011, df = 1, p-value < 2.2e-16
+
+```
+Since p is less than typical threshold 0.05, we reject the null hypothesis. Thus the model performance improvement is significant.
 
 ## V. Conclusion
-_(approx. 1-2 pages)_
 
 ### Free-Form Visualization
-In this section, you will need to provide some form of visualization that emphasizes an important quality about the project. It is much more free-form, but should reasonably support a significant result or characteristic about the problem that you want to discuss. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant or important quality about the problem, dataset, input data, or results?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
+Below images are all the signs that the model failed to predict.
+![alt][image13]
+
+There images are subject to severe flaws such as strong shadow/flare, obstructions, low illumination, motion blur etc. Even humen struggle to recognize.
 
 ### Reflection
-In this section, you will summarize the entire end-to-end problem solution and discuss one or two particular aspects of the project you found interesting or difficult. You are expected to reflect on the project as a whole to show that you have a firm understanding of the entire process employed in your work. Questions to ask yourself when writing this section:
-- _Have you thoroughly summarized the entire process you used for this project?_
-- _Were there any interesting aspects of the project?_
-- _Were there any difficult aspects of the project?_
-- _Does the final model and solution fit your expectations for the problem, and should it be used in a general setting to solve these types of problems?_
+
+This project has provided a novle apporach for traffic sign recognition with simplified pipline while its performance still exceeds the best published results. 
+With learned color and spatial transformation, the model is able to adapt to image's charactoristics without external support. 
+This essentially enables model to achieve better model performance with less data. 
+Since the transformers can be inserted into networks as an standard layer,
+these methods are also applicable for any other image recognition models.
+
 
 ### Improvement
-In this section, you will need to provide discussion as to how one aspect of the implementation you designed could be improved. As an example, consider ways your implementation can be made more general, and what would need to be modified. You do not need to make this improvement, but the potential solutions resulting from these changes are considered and compared/contrasted to your current solution. Questions to ask yourself when writing this section:
-- _Are there further improvements that could be made on the algorithms or techniques you used in this project?_
-- _Were there algorithms or techniques you researched that you did not know how to implement, but would consider using if you knew how?_
-- _If you used your final solution as the new benchmark, do you think an even better solution exists?_
+
+Due to limited computation power, parameter sweeping was not conducted. It is very possible this model could yield higher performance with other hyper parameter sets.
+Furthermore, The model architecture can be further optimized.
+
+In [12], the author has demonstrated using multiple spatial transformer networks could improve performance. 
+A better sptial transformer model is proposed in [20], which has prevented information during mutiple affine trasformations.
+
+This project aims to test the highest performance without preprocess nor augmenting the dataset. 
+However, it is expected that model performance could be further improved with preprocessing and augmentation.
+
+Current model is trained on a very limited dataset only, it is unable to categorize any other traffic signs which it is not trained on. 
+With more data, we can expect the model become able to classify more sign images.
 
 -----------
 
 [//]: # (References)
+
 [1]: De la Escalera, Arturo, J. Ma Armingol, and Mario Mata. "Traffic sign recognition and analysis for intelligent vehicles." Image and vision computing 21.3 (2003): 247-258.
 
 [2]: Miura, Jun, et al. "An active vision system for on-line traffic sign recognition." IEICE TRANSACTIONS on Information and Systems 85.11 (2002): 1784-1792.
@@ -139,19 +355,34 @@ In this section, you will need to provide discussion as to how one aspect of the
 
 [12]: Jaderberg, Max, Karen Simonyan, and Andrew Zisserman. "Spatial transformer networks." Advances in Neural Information Processing Systems. 2015.
 
+[13]: Mishkin, Dmytro, Nikolay Sergievskiy, and Jiri Matas. "Systematic evaluation of CNN advances on the ImageNet." arXiv preprint arXiv:1606.02228 (2016).
+
+[14]: Ioffe, Sergey, and Christian Szegedy. "Batch normalization: Accelerating deep network training by reducing internal covariate shift." arXiv preprint arXiv:1502.03167 (2015).
+
+[15]: Affine transformation, https://en.wikipedia.org/wiki/Affine_transformation
+
+[16]: Bilinear interpolation, https://en.wikipedia.org/wiki/Bilinear_interpolation
+
+[17]: Xudong Cao, "A practical theory for designing very deep convolutional neural networks", 2015
+
+[18]: Ioffe, Sergey, and Christian Szegedy. "Batch normalization: Accelerating deep network training by reducing internal covariate shift." arXiv preprint arXiv:1502.03167 (2015).
+
+[19]: Szegedy, Christian, et al. "Rethinking the inception architecture for computer vision. CoRR abs/1512.00567 (2015)." (2015).
+
+[20]: Lin, Chen-Hsuan, and Simon Lucey. "Inverse Compositional Spatial Transformer Networks." arXiv preprint arXiv:1612.03897 (2016).
 
 [//]: # (Image References)
 
-[image1]: ./footage/sample.png "Sample image"
-
-
-
-**Before submitting, ask yourself. . .**
-
-- Does the project report you’ve written follow a well-organized structure similar to that of the project template?
-- Is each section (particularly **Analysis** and **Methodology**) written in a clear, concise and specific fashion? Are there any ambiguous terms or phrases that need clarification?
-- Would the intended audience of your project be able to understand your analysis, methods, and results?
-- Have you properly proof-read your project report to assure there are minimal grammatical and spelling mistakes?
-- Are all the resources used for this project correctly cited and referenced?
-- Is the code that implements your solution easily readable and properly commented?
-- Does the code execute without error and produce results similar to those reported?
+[image1]: ./footage/sample.png "GTSRB sample image"
+[image2]: ./footage/stn.png "STN example"
+[image3]: ./footage/label_dist.png "Training label distribution"
+[image4]: ./footage/features.png "Features"
+[image5]: ./footage/stn_structure.png "Spatial Transformer Network structure"
+[image6]: ./footage/locnet.png "localization network structure"
+[image7]: ./footage/affine.png "Affine Transformation"
+[image8]: ./footage/bilinear.png "Bilinear interpolation"
+[image9]: ./footage/stn_evolution.gif "STN evolution"
+[image10]: ./footage/network.png "Full network"
+[image11]: ./footage/prob1.png "robustness test 1"
+[image12]: ./footage/prob2.png "robustness test 2"
+[image13]: ./footage/failed.png "failed images"

@@ -1,5 +1,4 @@
 import pickle
-
 import numpy as np
 
 from conv_model import conv_model

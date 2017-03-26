@@ -11,7 +11,7 @@ As a result, the model has higher performance than human without data preprocess
 
 ### Project Overview
 
-Recent advancement in autonomous vehicles has shown the once fictional technology is gradually becoming reality in the near future. 
+Recent advancement in autonomous vehicles has shown the once fictional technology is gradually becoming a reality in the near future. 
 In the foreseeable future, vehicles of various automation levels will coexist on the road. 
 Thus it is crucial for automated driving machines able to recognise and interpret the meaning of traffic signs and follow traffic rules. 
 
@@ -232,11 +232,45 @@ Since the model structure is able to learn the color and spatial variance, new t
 
 ### Implementation
 
-The final CNN architecture is illustrated in the Figure 10.
+Our project is composed of 3 main components from coding perspective:
+- Model definition in [conv_model.py](conv_model.py), defines model architecture.
+- Spatial transformer network in [spatial_transformer.py](spatial_transformer.py), defines spatial transformer network class.
+- Training in [train_keras.py](train_keras.py), defines data handling and training process.
+
+Each component is disscussed in detail in the following sections.
+
+#### Model definition
+Our model is implement in Keras [21] with Tensorflow[22] backend. The final CNN architecture is illustrated in the Figure 10.
 
 ![Full network][image10]
 
-Hyper parameters for training the model is listed in the table below.
+#### Spatial transformer network
+The STN class is defined in this component as a customized Keras Layer. 
+
+To initilize STN, one needs to specify localization net and output size (and input size if STN is the first layer). An example is given below:
+
+``` python
+import spatial_transformer
+
+# Define localization network
+def locnet():
+    # ...
+    return locnet
+
+# Create new STN object, use localization network locnet() and output size of 32 * 32
+stn = SpatialTransformer(localization_net=locnet(),
+                         output_size=(32, 32))
+
+# ...
+
+# Add STN as as a customized Keras layer
+model.add(stn)
+```
+#### Training
+
+Training module loads in all data, train, validate and test the model. Model weights with the least validation is kept during training.
+
+Hyper parameters for training is listed in the table below. 
 
 |Name|Value|
 |------|--------|
@@ -286,6 +320,8 @@ The following Figure11 and Figure 12 shows the result of the predictions.
 As we can see, the model performs very well on trained labels with very high confidence. However, it is unable to predict labels which aren't trained.
 Such as the "end of speed limit 60km/h" and "pedestrains only" are miscategorized since thet are not in the training label set.
 
+Overall, given the accurate and highly confident prediction results, I think the model is a robust enough solution for autonomous vehicle systems. With more data set trained, this model could be implemented for production.
+
 ### Justification
 
 Compared to human performance given by [7], we hereby compare the categorical accuray of the two models in the following table.
@@ -295,7 +331,7 @@ Compared to human performance given by [7], we hereby compare the categorical ac
 |Our model|99.59%|99.60%|99.53%|100%|99.81%|99.87%|99.69%|99.17%|
 |Human performance|98.84%|99.72%|98.67%|98.89%|98.00%|99.93%|97.63%|100%|
 
-As it is shown above, except "Red other" and "Special" category, our model has a higher accuray than human performance.
+As it is shown above, except "Red other" and "Special" category, our model has higher accuray than human performance.
 
 Here we use McNemar's test to judge if the improvement is significant:
 
@@ -324,15 +360,15 @@ Since p is less than typical threshold 0.05, we reject the null hypothesis. Thus
 
 ### Free-Form Visualization
 
-Figure 113 shows all images that the model failed to predict.
+Figure 13 shows all images that the model failed to predict.
 
 ![Failed images][image13]
 
-There images are subject to severe flaws such as strong shadow/flare, obstructions, low illumination, motion blur etc. Even humen struggle to recognize.
+These images are subject to severe flaws such as strong shadow/flare, obstructions, low illumination, motion blur etc. Even humen struggle to recognize.
 
 ### Reflection
 
-This project has provided a novle apporach for traffic sign recognition with simplified pipline while its performance still exceeds the best published results. 
+This project has provided a novel apporach for traffic sign recognition with simplified pipline while its performance still exceeds the best published results. 
 With learned color and spatial transformation, the model is able to adapt to image's charactoristics without external support. 
 This essentially enables model to achieve better model performance with less data. 
 Since the transformers can be inserted into networks as an standard layer,
@@ -345,9 +381,9 @@ Due to limited computation power, parameter sweeping was not conducted. It is ve
 Furthermore, The model architecture can be further optimized.
 
 In [12], the author has demonstrated using multiple spatial transformer networks could improve performance. 
-A better sptial transformer model is proposed in [20], which has prevented information during mutiple affine trasformations.
+A better sptial transformer model is proposed in [20], which has prevented information loss during multiple affine trasformations.
 
-This project aims to test the highest performance without preprocess nor augmenting the dataset. 
+This project aims to test the highest performance without preprocessing or augmenting the dataset. 
 However, it is expected that model performance could be further improved with preprocessing and augmentation.
 
 Current model is trained on a very limited dataset only, it is unable to categorize any other traffic signs which it is not trained on. 
@@ -396,6 +432,10 @@ With more data, we can expect the model become able to classify more sign images
 [19]: Szegedy, Christian, et al. "Rethinking the inception architecture for computer vision. CoRR abs/1512.00567 (2015)." (2015).
 
 [20]: Lin, Chen-Hsuan, and Simon Lucey. "Inverse Compositional Spatial Transformer Networks." arXiv preprint arXiv:1612.03897 (2016).
+
+[21]: Chollet, François. "Keras." (2015).
+
+[22]: Abadi, Martín, et al. "Tensorflow: Large-scale machine learning on heterogeneous distributed systems." arXiv preprint arXiv:1603.04467 (2016).
 
 [//]: # (Image References)
 

@@ -11,6 +11,6 @@ Full report please see [capstone_report.md](capstone_report.md) (need latex supp
 ``` python
 python train_keras.py
 ```
-Training data can be downloaded by click [here](https://d17h27t6h515a5.cloudfront.net/topher/2017/February/5898cd6f_traffic-signs-data/traffic-signs-data.zip).
+Training data can be downloaded by clicking [here](https://d17h27t6h515a5.cloudfront.net/topher/2017/February/5898cd6f_traffic-signs-data/traffic-signs-data.zip).
 
 
